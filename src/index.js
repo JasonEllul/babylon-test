@@ -12,6 +12,8 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { ActionManager } from "@babylonjs/core/Actions/actionManager";
 import { ExecuteCodeAction } from "@babylonjs/core/Actions/directActions";
 
+import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
+
 import { Color3 } from "@babylonjs/core/Maths/math";
 
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -27,6 +29,8 @@ import "@babylonjs/core/Meshes/meshBuilder";
 import "@babylonjs/core/Physics/physicsEngineComponent";
 import '@babylonjs/core/Loading/Plugins/babylonFileLoader';
 import '@babylonjs/core/Maths/math';
+
+import 'babylonjs-loaders';
 
 // Get the canvas element from the DOM.
 const canvas = document.getElementById("renderCanvas");
@@ -120,6 +124,8 @@ scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTr
   map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
 }));
 
+// var newMeshes = (SceneLoader.ImportMesh("", "../assets/", "spaceship.glb", scene)).meshes;
+
 var box = Mesh.CreateBox('box1', 2, scene);
 box.position.y = 1;
 box.position.x = -50;
@@ -153,7 +159,6 @@ ramp.material = material;
 ramp.physicsImpostor = new PhysicsImpostor(ramp, PhysicsImpostor.BoxImpostor, { mass: 0 }, scene);
 ramp.rotate(Axis.X, 60, Space.LOCAL);
 ramp.rotate(Axis.Y, 60, Space.LOCAL);
-
 
 scene.registerAfterRender(function () {
 
