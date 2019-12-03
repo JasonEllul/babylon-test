@@ -8,6 +8,9 @@ import { FollowCamera } from '@babylonjs/core/Cameras/followCamera';
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 
+import { ActionManager } from "@babylonjs/core/Actions/actionManager";
+import { ExecuteCodeAction } from "@babylonjs/core/Actions/directActions";
+
 import { Color3 } from "@babylonjs/core/Maths/math";
 
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -47,7 +50,7 @@ camera.heightOffset = 15;
 camera.rotationOffset = 45;
 
 // Acceleration of camera in moving from current to goal position
-camera.cameraAcceleration = 0.005;
+camera.cameraAcceleration = 0.025;
 
 // The speed at which acceleration is halted
 camera.maxCameraSpeed = 10;
@@ -79,7 +82,6 @@ sphere.position.y = 4;
 // Affect a material
 sphere.material = primaryMaterial;
 
-
 // Our built-in 'ground' shape. Params: name, width, depth, subdivs, scene
 var ground = Mesh.CreateGround("ground1", 1000, 1000, 2, scene);
 
@@ -91,14 +93,56 @@ var gravityVector = new Vector3(0, -9.81, 0);
 var physicsPlugin = new CannonJSPlugin(true, 10, CANNON);
 scene.enablePhysics(gravityVector, physicsPlugin);
 
-sphere.physicsImpostor = new PhysicsImpostor(sphere, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.5 }, scene);
-ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.5 }, scene);
+sphere.physicsImpostor = new PhysicsImpostor(sphere, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9, friction: 0.4 }, scene);
+ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.5, friction: 0.5 }, scene);
 
-sphere.physicsImpostor.setLinearVelocity(new Vector3(2, 0, 0));
+// sphere.physicsImpostor.setLinearVelocity(new Vector3(2, 0, 0));
 
+// Create dumy object for camera to follow
+var followObject = Mesh.CreateBox("followObject", 0.001, scene);
+followObject.position = sphere.position;
+// Camera focus on follow object
+camera.lockedTarget = followObject;
 
-// Camera focus
-camera.lockedTarget = sphere;
+// Register control listeners
+var map = {};
+scene.actionManager = new ActionManager(scene);
+
+scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, function (evt) {
+  map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+}));
+
+scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, function (evt) {
+  map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+}));
+
+let playerSpeed = { z: 0, x: 0 };
+
+scene.registerAfterRender(function () {
+  // Update follow object
+  followObject.position = sphere.position;
+
+  var dtime = scene.getEngine().getDeltaTime()
+  if ((map["w"] || map["W"])) {
+    var force = new Vector3(0, 0, -1);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+  };
+  if ((map["s"] || map["S"])) {
+    var force = new Vector3(0, 0, 1);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+  };
+
+  if ((map["a"] || map["A"])) {
+    var force = new Vector3(1, 0, 0);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+  };
+
+  if ((map["d"] || map["D"])) {
+    var force = new Vector3(-1, 0, 0);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+  };
+
+});
 
 // Render every frame
 engine.runRenderLoop(() => {
