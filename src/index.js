@@ -1,7 +1,8 @@
 // Tree-shaking imports
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { Scene } from "@babylonjs/core/scene";
-import { Vector3 } from "@babylonjs/core/Maths/math";
+import { Axis, Space, Vector3 } from "@babylonjs/core/Maths/math";
+
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { FlyCamera } from "@babylonjs/core/Cameras/flyCamera";
 import { FollowCamera } from '@babylonjs/core/Cameras/followCamera';
@@ -66,17 +67,21 @@ camera.lockedTarget = followObject;
 // Color Palette
 var primaryColor = new Color3(0.338, 0.80, 0.94);
 var primaryColorDark = new Color3(0.184, 0.502, 0.929);
+var secondaryColor = new Color3(0.976, 0.325, 0.776);
+
+// Material Palette
+var material = new GridMaterial("grid", scene);
+
+var primaryMaterial = new StandardMaterial("primaryMaterial", scene);
+primaryMaterial.ambientColor = primaryColor;
+var secondaryMaterial = new StandardMaterial("secondaryMaterial", scene);
+secondaryMaterial.ambientColor = secondaryColor;
 
 // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
 var light = new HemisphericLight("light1", new Vector3(1, 1, 0), scene);
 light.diffuse = primaryColor;
 light.specular = primaryColor
 light.groundColor = primaryColorDark;
-
-// Create a grid material
-var material = new GridMaterial("grid", scene);
-var primaryMaterial = new StandardMaterial("primaryMaterial", scene);
-primaryMaterial.ambientColor = primaryColor;
 
 // Our built-in 'sphere' shape. Params: name, subdivs, size, scene
 var sphere = Mesh.CreateSphere("sphere1", 16, 2, scene);
@@ -93,13 +98,14 @@ var ground = Mesh.CreateGround("ground1", 1000, 1000, 2, scene);
 // Affect a material
 ground.material = material;
 
+
 // Enable Physics
 var gravityVector = new Vector3(0, -9.81, 0);
 var physicsPlugin = new CannonJSPlugin(true, 10, CANNON);
 scene.enablePhysics(gravityVector, physicsPlugin);
 
-sphere.physicsImpostor = new PhysicsImpostor(sphere, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
-sphere.physicsImpostor.physicsBody.linearDamping = 0.4;
+sphere.physicsImpostor = new PhysicsImpostor(sphere, PhysicsImpostor.SphereImpostor, { mass: 5, restitution: 0.9 }, scene);
+sphere.physicsImpostor.physicsBody.linearDamping = 0.1;
 ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.5, friction: 0.5 }, scene);
 
 // Register control listeners
@@ -114,6 +120,41 @@ scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTr
   map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
 }));
 
+var box = Mesh.CreateBox('box1', 2, scene);
+box.position.y = 1;
+box.position.x = -50;
+box.position.z = -50;
+box.material = secondaryMaterial;
+box.physicsImpostor = new PhysicsImpostor(box, PhysicsImpostor.BoxImpostor, { mass: 1, restitution: 0.9, friction: 0.5 }, scene);
+var box2 = Mesh.CreateBox('box2', 2, scene);
+box2.position.y = 1;
+box2.position.x = -48;
+box2.position.z = -50;
+box2.material = secondaryMaterial;
+box2.physicsImpostor = new PhysicsImpostor(box2, PhysicsImpostor.BoxImpostor, { mass: 1, restitution: 0.9, friction: 0.5 }, scene);
+var box3 = Mesh.CreateBox('box3', 2, scene);
+box3.position.y = 1;
+box3.position.x = -52;
+box3.position.z = -50;
+box3.material = secondaryMaterial;
+box3.physicsImpostor = new PhysicsImpostor(box3, PhysicsImpostor.BoxImpostor, { mass: 1, restitution: 0.9, friction: 0.5 }, scene);
+var box3 = Mesh.CreateBox('box3', 2, scene);
+box3.position.y = 3;
+box3.position.x = -50;
+box3.position.z = -50;
+box3.material = secondaryMaterial;
+box3.physicsImpostor = new PhysicsImpostor(box3, PhysicsImpostor.BoxImpostor, { mass: 1, restitution: 0.9, friction: 0.5 }, scene);
+
+var ramp = Mesh.CreateBox('ramp', 30, scene);
+ramp.position.y = -10;
+ramp.position.x = -20;
+ramp.position.z = -20;
+ramp.material = material;
+ramp.physicsImpostor = new PhysicsImpostor(ramp, PhysicsImpostor.BoxImpostor, { mass: 0 }, scene);
+ramp.rotate(Axis.X, 60, Space.LOCAL);
+ramp.rotate(Axis.Y, 60, Space.LOCAL);
+
+
 scene.registerAfterRender(function () {
 
   let playerPosition = sphere.getAbsolutePosition();
@@ -124,21 +165,21 @@ scene.registerAfterRender(function () {
   var dtime = scene.getEngine().getDeltaTime()
   if ((map["w"] || map["W"])) {
     var force = new Vector3(-1, 0, -1);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(1, 0, 1)));
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition);
   };
   if ((map["s"] || map["S"])) {
     var force = new Vector3(1, 0, 1);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(-1, 0, -1)));
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition);
   };
 
   if ((map["a"] || map["A"])) {
     var force = new Vector3(1, 0, -1);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(-1, 0, 1)));
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition);
   };
 
   if ((map["d"] || map["D"])) {
     var force = new Vector3(-1, 0, 1);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(1, 0, -1)));
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition);
   };
 
 });
@@ -147,3 +188,5 @@ scene.registerAfterRender(function () {
 engine.runRenderLoop(() => {
   scene.render();
 });
+
+
