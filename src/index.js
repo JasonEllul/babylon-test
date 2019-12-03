@@ -58,6 +58,11 @@ camera.maxCameraSpeed = 10;
 // This attaches the camera to the canvas
 camera.attachControl(canvas, true);
 
+// Create dummy object for camera to follow
+var followObject = Mesh.CreateBox("followObject", 0.001, scene);
+// Camera focus on follow object
+camera.lockedTarget = followObject;
+
 // Color Palette
 var primaryColor = new Color3(0.338, 0.80, 0.94);
 var primaryColorDark = new Color3(0.184, 0.502, 0.929);
@@ -93,16 +98,9 @@ var gravityVector = new Vector3(0, -9.81, 0);
 var physicsPlugin = new CannonJSPlugin(true, 10, CANNON);
 scene.enablePhysics(gravityVector, physicsPlugin);
 
-sphere.physicsImpostor = new PhysicsImpostor(sphere, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9, friction: 0.4 }, scene);
+sphere.physicsImpostor = new PhysicsImpostor(sphere, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
+sphere.physicsImpostor.physicsBody.linearDamping = 0.4;
 ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.5, friction: 0.5 }, scene);
-
-// sphere.physicsImpostor.setLinearVelocity(new Vector3(2, 0, 0));
-
-// Create dumy object for camera to follow
-var followObject = Mesh.CreateBox("followObject", 0.001, scene);
-followObject.position = sphere.position;
-// Camera focus on follow object
-camera.lockedTarget = followObject;
 
 // Register control listeners
 var map = {};
@@ -116,30 +114,31 @@ scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTr
   map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
 }));
 
-let playerSpeed = { z: 0, x: 0 };
-
 scene.registerAfterRender(function () {
-  // Update follow object
-  followObject.position = sphere.position;
 
+  let playerPosition = sphere.getAbsolutePosition();
+  // Update follow object
+  followObject.position = playerPosition;
+
+  // Apply forces based on controls
   var dtime = scene.getEngine().getDeltaTime()
   if ((map["w"] || map["W"])) {
-    var force = new Vector3(0, 0, -1);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+    var force = new Vector3(-1, 0, -1);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(1, 0, 1)));
   };
   if ((map["s"] || map["S"])) {
-    var force = new Vector3(0, 0, 1);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+    var force = new Vector3(1, 0, 1);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(-1, 0, -1)));
   };
 
   if ((map["a"] || map["A"])) {
-    var force = new Vector3(1, 0, 0);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+    var force = new Vector3(1, 0, -1);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(-1, 0, 1)));
   };
 
   if ((map["d"] || map["D"])) {
-    var force = new Vector3(-1, 0, 0);
-    sphere.physicsImpostor.applyForce(force.scale(dtime), sphere.getAbsolutePosition());
+    var force = new Vector3(-1, 0, 1);
+    sphere.physicsImpostor.applyForce(force.scale(dtime), playerPosition.subtract(new Vector3(1, 0, -1)));
   };
 
 });
