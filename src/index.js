@@ -30,7 +30,10 @@ import "@babylonjs/core/Physics/physicsEngineComponent";
 import '@babylonjs/core/Loading/Plugins/babylonFileLoader';
 import '@babylonjs/core/Maths/math';
 
-import 'babylonjs-loaders';
+import '@babylonjs/loaders';
+// Add loading screen
+import '@babylonjs/core/Loading/loadingScreen';
+
 
 // Get the canvas element from the DOM.
 const canvas = document.getElementById("renderCanvas");
@@ -124,7 +127,18 @@ scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTr
   map[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
 }));
 
-// var newMeshes = (SceneLoader.ImportMesh("", "../assets/", "spaceship.glb", scene)).meshes;
+//var newMeshes = (SceneLoader.ImportMesh("", "../assets/", "spaceship.glb", scene)).meshes;
+
+// Callback after loading meshes
+SceneLoader.ImportMesh("", "../assets/", "spaceship.glb", scene, function (meshes) {
+  console.log(meshes);
+
+});
+// SceneLoader.Append("assets/", "spaceship.glb", scene, function (scene) {
+//   var newMeshes = scene.meshes;
+//   console.log(newMeshes);
+
+// });
 
 var box = Mesh.CreateBox('box1', 2, scene);
 box.position.y = 1;
